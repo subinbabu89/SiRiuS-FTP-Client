@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.srs.advse.ftp.client;
+package org.srs.advse.ftp.commhandler;
 
 import java.io.DataOutputStream;
 import java.io.OutputStream;

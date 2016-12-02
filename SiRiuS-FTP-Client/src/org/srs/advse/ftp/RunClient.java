@@ -6,8 +6,8 @@ package org.srs.advse.ftp;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import org.srs.advse.ftp.client.ClientCommunicationHandler;
 import org.srs.advse.ftp.client.SRSFTPClient;
+import org.srs.advse.ftp.commhandler.ClientCommunicationHandler;
 
 /**
  * @author Subin

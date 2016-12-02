@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.srs.advse.ftp.client;
+package org.srs.advse.ftp.thread;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -16,6 +16,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.util.List;
+
+import org.srs.advse.ftp.client.SRSFTPClient;
 
 /**
  * @author Subin
