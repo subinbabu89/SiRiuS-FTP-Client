@@ -89,7 +89,7 @@ public class DownloadHandler implements Runnable {
 
 		client.transferIN(serverPath.resolve(inputs.get(1)), terminateID);
 
-		if (client.terminateGET(path.resolve(inputs.get(1)), serverPath.resolve(inputs.get(1)), terminateID)) {
+		if (client.terminateDOWNLOAD(path.resolve(inputs.get(1)), serverPath.resolve(inputs.get(1)), terminateID)) {
 			return;
 		}
 
@@ -99,7 +99,7 @@ public class DownloadHandler implements Runnable {
 		DataInputStream dis = new DataInputStream(arrayInputStream);
 		long fileSize = dis.readLong();
 
-		if (client.terminateGET(path.resolve(inputs.get(1)), serverPath.resolve(inputs.get(1)), terminateID)) {
+		if (client.terminateDOWNLOAD(path.resolve(inputs.get(1)), serverPath.resolve(inputs.get(1)), terminateID)) {
 			return;
 		}
 
@@ -108,7 +108,7 @@ public class DownloadHandler implements Runnable {
 		byte[] buffer = new byte[8192];
 		long bytesReceived = 0;
 		while (bytesReceived < fileSize) {
-			if (client.terminateGET(path.resolve(inputs.get(1)), serverPath.resolve(inputs.get(1)), terminateID)) {
+			if (client.terminateDOWNLOAD(path.resolve(inputs.get(1)), serverPath.resolve(inputs.get(1)), terminateID)) {
 				fileOutputStream.close();
 				return;
 			}

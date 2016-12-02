@@ -89,14 +89,14 @@ public class UploadHandler implements Runnable {
 
 			client.transferIN(serverPath.resolve(inputs.get(1)), terminateID);
 
-			if (client.terminatePUT(serverPath.resolve(inputs.get(0)), terminateID)) {
+			if (client.terminateUPLOAD(serverPath.resolve(inputs.get(0)), terminateID)) {
 				return;
 			}
 
 			bufferedReader.readLine();
 			Thread.sleep(100);
 
-			if (client.terminatePUT(serverPath.resolve(inputs.get(0)), terminateID)) {
+			if (client.terminateUPLOAD(serverPath.resolve(inputs.get(0)), terminateID)) {
 				return;
 			}
 
@@ -108,14 +108,14 @@ public class UploadHandler implements Runnable {
 				byte[] fileSizeBytes = ByteBuffer.allocate(8).putLong(fileSize).array();
 				dataOutputStream.write(fileSizeBytes, 0, 8);
 
-				if (client.terminatePUT(serverPath.resolve(inputs.get(1)), terminateID)) {
+				if (client.terminateUPLOAD(serverPath.resolve(inputs.get(1)), terminateID)) {
 					return;
 				}
 
 				BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(file));
 				int count = 0;
 				while ((count = bufferedInputStream.read()) > 0) {
-					if (client.terminatePUT(serverPath.resolve(inputs.get(1)), terminateID)) {
+					if (client.terminateUPLOAD(serverPath.resolve(inputs.get(1)), terminateID)) {
 						bufferedInputStream.close();
 						return;
 					}

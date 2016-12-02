@@ -111,9 +111,10 @@ public class ClientCommunicationHandler implements Runnable {
 		System.out.println("Try `help' for more information.");
 	}
 
-	public void get() throws Exception {
-		System.out.println("tempPath" + Paths.get(serverPath.toString()));
-		System.out.println("tempPathClient" + Paths.get(userPath.toString()));
+	/**
+	 * @throws Exception
+	 */
+	public void download() throws Exception {
 		if (input.get(1).endsWith(" &")) {
 			input.set(1, input.get(1).substring(0, input.get(1).length() - 1).trim());
 
@@ -134,8 +135,9 @@ public class ClientCommunicationHandler implements Runnable {
 			return;
 		}
 
-//		dataChannelOutputStream.writeBytes("get " + serverPath.resolve(input.get(1)) + "\n");
-		dataChannelOutputStream.writeBytes("get " + input.get(1) + "\n");
+		// dataChannelOutputStream.writeBytes("get " +
+		// serverPath.resolve(input.get(1)) + "\n");
+		dataChannelOutputStream.writeBytes("down " + input.get(1) + "\n");
 
 		String line;
 		if (!(line = commandCbuffer.readLine()).equals("")) {
@@ -157,7 +159,8 @@ public class ClientCommunicationHandler implements Runnable {
 		DataInputStream dis = new DataInputStream(bis);
 		long fileSize = dis.readLong();
 
-//		FileOutputStream fileOutputStream = new FileOutputStream(new File(input.get(1)));
+		// FileOutputStream fileOutputStream = new FileOutputStream(new
+		// File(input.get(1)));
 		FileOutputStream fileOutputStream = new FileOutputStream(new File(userPath + File.separator + input.get(1)));
 		int count = 0;
 		byte[] filebuffer = new byte[1000];
@@ -172,9 +175,10 @@ public class ClientCommunicationHandler implements Runnable {
 		client.transferOUT(serverPath.resolve(input.get(1)), terminateID);
 	}
 
-	public void put() throws Exception {
-		System.out.println("tempPath" + Paths.get(serverPath.toString()));
-		System.out.println("tempPathClient" + Paths.get(userPath.toString()));
+	/**
+	 * @throws Exception
+	 */
+	public void upload() throws Exception {
 		if (input.get(1).endsWith(" &")) {
 			input.set(1, input.get(1).substring(0, input.get(1).length() - 1).trim());
 
@@ -198,8 +202,9 @@ public class ClientCommunicationHandler implements Runnable {
 		} else if (Files.isDirectory(userPath.resolve(input.get(1)))) {
 			System.out.println("is a directory");
 		} else {
-			dataChannelOutputStream.writeBytes("put " + input.get(1) + "\n");
-//			dataChannelOutputStream.writeBytes("put " + serverPath.resolve(input.get(1)) + "\n");
+			dataChannelOutputStream.writeBytes("up " + input.get(1) + "\n");
+			// dataChannelOutputStream.writeBytes("put " +
+			// serverPath.resolve(input.get(1)) + "\n");
 
 			try {
 				terminateID = Integer.parseInt(commandCbuffer.readLine());
@@ -265,16 +270,15 @@ public class ClientCommunicationHandler implements Runnable {
 				if (input.isEmpty())
 					continue;
 
-				System.out.println(input.get(0));
 				switch (input.get(0)) {
 				case "test":
 					System.out.println("printing test in client");
 					break;
-				case "get":
-					get();
+				case "down":
+					download();
 					break;
-				case "put":
-					put();
+				case "up":
+					upload();
 					break;
 				case "quit":
 					break;

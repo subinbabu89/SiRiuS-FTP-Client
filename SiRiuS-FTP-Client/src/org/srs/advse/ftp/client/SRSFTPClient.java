@@ -62,7 +62,7 @@ public class SRSFTPClient {
 	 * @param commandID
 	 * @return
 	 */
-	public synchronized boolean terminatePUT(Path path, int commandID) {
+	public synchronized boolean terminateUPLOAD(Path path, int commandID) {
 		try {
 			if (terminateSet.contains(commandID)) {
 				commandChannelMap.remove(commandID);
@@ -82,7 +82,7 @@ public class SRSFTPClient {
 	 * @param commandID
 	 * @return
 	 */
-	public synchronized boolean terminateGET(Path path, Path serverPath, int commandID) {
+	public synchronized boolean terminateDOWNLOAD(Path path, Path serverPath, int commandID) {
 		try {
 			if (terminateSet.contains(commandID)) {
 				commandChannelMap.remove(commandID);
