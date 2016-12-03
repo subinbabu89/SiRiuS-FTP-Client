@@ -73,7 +73,7 @@ public class DownloadHandler implements Runnable {
 			return;
 		}
 
-		dataOutputStream.writeBytes("get " + serverPath.resolve(inputs.get(1)) + "\n");
+		dataOutputStream.writeBytes("down " + inputs.get(1) + "\n");
 
 		String line;
 		if (!(line = bufferedReader.readLine()).equals("")) {
@@ -103,7 +103,7 @@ public class DownloadHandler implements Runnable {
 			return;
 		}
 
-		FileOutputStream fileOutputStream = new FileOutputStream(new File(inputs.get(1)));
+		FileOutputStream fileOutputStream = new FileOutputStream(new File(path + File.separator + inputs.get(1)));
 		int count = 0;
 		byte[] buffer = new byte[8192];
 		long bytesReceived = 0;

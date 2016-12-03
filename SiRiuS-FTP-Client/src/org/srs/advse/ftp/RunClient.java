@@ -5,8 +5,6 @@ package org.srs.advse.ftp;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -34,8 +32,6 @@ public class RunClient {
 	public static void main(String[] args) {
 
 		Scanner scanner = new Scanner(System.in);
-
-		String ftpPath = System.getProperty("user.home") + File.separator + "ftp";
 
 		System.out.println("Enter your username : ");
 		String username = scanner.nextLine();
@@ -74,6 +70,7 @@ public class RunClient {
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
+		scanner.close();
 		try {
 			SRSFTPClient client = new SRSFTPClient();
 			(new Thread(new ClientCommunicationHandler(client, hostname, nPort, clientDir))).start();

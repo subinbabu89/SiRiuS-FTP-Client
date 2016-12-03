@@ -3,22 +3,14 @@
  */
 package org.srs.advse.ftp.commhandler;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -38,7 +30,6 @@ public class ClientCommunicationHandler implements Runnable {
 	private InputStreamReader commandChannelReader;
 	BufferedReader commandCbuffer;
 
-	private DataInputStream dataChannelInputStream;
 	private DataOutputStream dataChannelOutputStream;
 	private OutputStream dataOutputStream;
 
@@ -50,7 +41,7 @@ public class ClientCommunicationHandler implements Runnable {
 	private Socket socket;
 	private Path serverPath, userPath;
 
-	private int terminateID;
+	private String clientDir;
 
 	/**
 	 * @param client
@@ -58,10 +49,11 @@ public class ClientCommunicationHandler implements Runnable {
 	 * @param port
 	 * @throws IOException
 	 */
-	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir) throws IOException {
+	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir) throws Exception {
 		this.client = client;
 		this.host = host;
 		this.port = port;
+		this.clientDir = clientDir;
 
 		InetAddress hostAddress = InetAddress.getByName(host);
 		socket = new Socket();
@@ -69,8 +61,6 @@ public class ClientCommunicationHandler implements Runnable {
 
 		commandChannelReader = new InputStreamReader(socket.getInputStream());
 		commandCbuffer = new BufferedReader(commandChannelReader);
-
-		dataChannelInputStream = new DataInputStream(socket.getInputStream());
 
 		dataOutputStream = socket.getOutputStream();
 		dataChannelOutputStream = new DataOutputStream(dataOutputStream);
@@ -115,130 +105,31 @@ public class ClientCommunicationHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public void download() throws Exception {
-		if (input.get(1).endsWith(" &")) {
-			input.set(1, input.get(1).substring(0, input.get(1).length() - 1).trim());
+		(new Thread(new DownloadHandler(client, host, port, input, serverPath, userPath))).start();
+	}
 
-			List<String> list = new ArrayList<String>(input);
-			Path tempServerPath = Paths.get(serverPath.toString());
-			Path tempClientPath = Paths.get(userPath.toString());
-
-			(new Thread(new DownloadHandler(client, host, port, list, tempServerPath, tempClientPath))).start();
-			;
-
-			Thread.sleep(50);
-
+	/**
+	 * @throws Exception
+	 */
+	public void list() throws Exception {
+		if (input.size() != 1) {
+			invalid();
 			return;
 		}
 
-		if (!client.transfer(serverPath.resolve(input.get(1)))) {
-			System.out.println("file already downloading");
-			return;
-		}
-
-		// dataChannelOutputStream.writeBytes("get " +
-		// serverPath.resolve(input.get(1)) + "\n");
-		dataChannelOutputStream.writeBytes("down " + input.get(1) + "\n");
+		dataChannelOutputStream.writeBytes("list" + "\n");
 
 		String line;
-		if (!(line = commandCbuffer.readLine()).equals("")) {
+		while (!(line = commandCbuffer.readLine()).equals(""))
 			System.out.println(line);
-			return;
-		}
 
-		try {
-			terminateID = Integer.parseInt(commandCbuffer.readLine());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		client.transferIN(serverPath.resolve(input.get(1)), terminateID);
-
-		byte[] fileSizeBuffer = new byte[8];
-		dataChannelInputStream.read(fileSizeBuffer);
-		ByteArrayInputStream bis = new ByteArrayInputStream(fileSizeBuffer);
-		DataInputStream dis = new DataInputStream(bis);
-		long fileSize = dis.readLong();
-
-		// FileOutputStream fileOutputStream = new FileOutputStream(new
-		// File(input.get(1)));
-		FileOutputStream fileOutputStream = new FileOutputStream(new File(userPath + File.separator + input.get(1)));
-		int count = 0;
-		byte[] filebuffer = new byte[1000];
-		long bytesReceived = 0;
-		while (bytesReceived < fileSize) {
-			count = dataChannelInputStream.read(filebuffer);
-			fileOutputStream.write(filebuffer, 0, count);
-			bytesReceived += count;
-		}
-		fileOutputStream.close();
-
-		client.transferOUT(serverPath.resolve(input.get(1)), terminateID);
 	}
 
 	/**
 	 * @throws Exception
 	 */
 	public void upload() throws Exception {
-		if (input.get(1).endsWith(" &")) {
-			input.set(1, input.get(1).substring(0, input.get(1).length() - 1).trim());
-
-			List<String> list = new ArrayList<String>();
-			Path tempServerPath = Paths.get(serverPath.toString());
-
-			(new Thread(new UploadHandler(client, host, port, list, tempServerPath))).start();
-
-			Thread.sleep(50);
-
-			return;
-		}
-
-		if (!client.transfer(serverPath.resolve(input.get(1)))) {
-			System.out.println("already downloading");
-			return;
-		}
-
-		if (Files.notExists(userPath.resolve(input.get(1)))) {
-			System.out.println("no such file");
-		} else if (Files.isDirectory(userPath.resolve(input.get(1)))) {
-			System.out.println("is a directory");
-		} else {
-			dataChannelOutputStream.writeBytes("up " + input.get(1) + "\n");
-			// dataChannelOutputStream.writeBytes("put " +
-			// serverPath.resolve(input.get(1)) + "\n");
-
-			try {
-				terminateID = Integer.parseInt(commandCbuffer.readLine());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			client.transferIN(serverPath.resolve(input.get(1)), terminateID);
-
-			commandCbuffer.readLine();
-
-			Thread.sleep(100);
-
-			byte[] fileBuffer = new byte[1000];
-			try {
-				File file = new File(userPath.resolve(input.get(1)).toString());
-
-				long fileSize = file.length();
-				byte[] fileSizeBytes = ByteBuffer.allocate(8).putLong(fileSize).array();
-				dataChannelOutputStream.write(fileSizeBytes, 0, 8);
-
-				Thread.sleep(100);
-
-				BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-				int count = 0;
-				while ((count = bis.read(fileBuffer)) > 0) {
-					dataChannelOutputStream.write(fileBuffer, 0, count);
-				}
-				bis.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			client.transferOUT(serverPath.resolve(input.get(1)), terminateID);
-		}
+		(new Thread(new UploadHandler(client, host, port, input, serverPath, clientDir))).start();
 	}
 
 	/*
@@ -279,6 +170,9 @@ public class ClientCommunicationHandler implements Runnable {
 					break;
 				case "up":
 					upload();
+					break;
+				case "list":
+					list();
 					break;
 				case "quit":
 					break;
