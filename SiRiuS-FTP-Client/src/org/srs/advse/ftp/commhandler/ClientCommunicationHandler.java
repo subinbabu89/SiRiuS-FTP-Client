@@ -5,6 +5,7 @@ package org.srs.advse.ftp.commhandler;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import org.srs.advse.ftp.Constants;
 import org.srs.advse.ftp.client.SRSFTPClient;
 import org.srs.advse.ftp.thread.DownloadHandler;
 import org.srs.advse.ftp.thread.UploadHandler;
@@ -49,7 +51,7 @@ public class ClientCommunicationHandler implements Runnable {
 	 * @param port
 	 * @throws IOException
 	 */
-	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir) throws Exception {
+	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir,String username) throws Exception {
 		this.client = client;
 		this.host = host;
 		this.port = port;
@@ -74,8 +76,16 @@ public class ClientCommunicationHandler implements Runnable {
 		// userPath = Paths.get(System.getProperty("user.dir"));
 		userPath = Paths.get(clientDir);
 		System.out.println("Connected to: " + hostAddress);
+		
+		String ftpPath = Constants.getServerPath() + File.separator + "ftp";
+		Path path = Paths.get(ftpPath + File.separator + username);
+		setPath(path);
 	}
 
+	public void setPath(Path path) throws Exception{
+		dataChannelOutputStream.writeBytes("setpath " +path.toString()+ "\n");
+	}
+	
 	/**
 	 * @throws Exception
 	 */

@@ -72,7 +72,7 @@ public class RunClient {
 		}
 		try {
 			SRSFTPClient client = new SRSFTPClient();
-			(new Thread(new ClientCommunicationHandler(client, hostname, nPort, clientDir))).start();
+			(new Thread(new ClientCommunicationHandler(client, hostname, nPort, clientDir,username))).start();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
