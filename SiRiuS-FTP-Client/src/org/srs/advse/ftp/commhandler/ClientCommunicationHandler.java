@@ -141,7 +141,7 @@ public class ClientCommunicationHandler implements Runnable {
 	public void run() {
 		try {
 			Scanner scanner = new Scanner(System.in);
-			String command;
+			String command = "";
 			do {
 				System.out.print("srsftp::>");
 				command = scanner.nextLine();
@@ -183,7 +183,6 @@ public class ClientCommunicationHandler implements Runnable {
 					System.out.println("unrecognized command");
 				}
 			} while (!command.equalsIgnoreCase("quit"));
-			scanner.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
