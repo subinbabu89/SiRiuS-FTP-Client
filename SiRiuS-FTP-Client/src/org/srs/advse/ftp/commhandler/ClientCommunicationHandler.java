@@ -252,7 +252,7 @@ public class ClientCommunicationHandler implements Runnable {
 			Scanner scanner = new Scanner(System.in);
 			String command;
 			do {
-				System.out.print("srsftp >");
+				System.out.print("srsftp::>");
 				command = scanner.nextLine();
 				command = command.trim();
 
