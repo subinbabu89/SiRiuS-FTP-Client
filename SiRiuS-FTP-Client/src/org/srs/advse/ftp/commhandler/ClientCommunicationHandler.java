@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import org.srs.advse.ftp.Constants;
+import org.srs.advse.ftp.RunClient;
 import org.srs.advse.ftp.client.SRSFTPClient;
 import org.srs.advse.ftp.thread.DownloadHandler;
 import org.srs.advse.ftp.thread.UploadHandler;
@@ -44,6 +45,7 @@ public class ClientCommunicationHandler implements Runnable {
 	private Path serverPath, userPath;
 
 	private String clientDir;
+	private String username;
 
 	/**
 	 * @param client
@@ -51,11 +53,13 @@ public class ClientCommunicationHandler implements Runnable {
 	 * @param port
 	 * @throws IOException
 	 */
-	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir,String username) throws Exception {
+	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir, String username)
+			throws Exception {
 		this.client = client;
 		this.host = host;
 		this.port = port;
 		this.clientDir = clientDir;
+		this.username = username;
 
 		InetAddress hostAddress = InetAddress.getByName(host);
 		socket = new Socket();
@@ -76,16 +80,13 @@ public class ClientCommunicationHandler implements Runnable {
 		// userPath = Paths.get(System.getProperty("user.dir"));
 		userPath = Paths.get(clientDir);
 		System.out.println("Connected to: " + hostAddress);
-		
-		String ftpPath = Constants.getServerPath() + File.separator + "ftp";
-		Path path = Paths.get(ftpPath + File.separator + username);
-		setPath(path);
+
 	}
 
-	public void setPath(Path path) throws Exception{
-		dataChannelOutputStream.writeBytes("setpath " +path.toString()+ "\n");
+	public void setPath(Path path) throws Exception {
+		dataChannelOutputStream.writeBytes("setpath " + path.toString() + "\n");
 	}
-	
+
 	/**
 	 * @throws Exception
 	 */
@@ -99,8 +100,13 @@ public class ClientCommunicationHandler implements Runnable {
 		// send command
 		dataChannelOutputStream.writeBytes("pwd" + "\n");
 
+		String line;
+		String receivedText = commandCbuffer.readLine();
+		if (!(line = receivedText).equals("")) {
+			serverPath = Paths.get(line);
+		}
 		// message
-		System.out.println(commandCbuffer.readLine());
+		System.out.println(receivedText);
 	}
 
 	/**
@@ -115,6 +121,15 @@ public class ClientCommunicationHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public void download() throws Exception {
+		// send command
+		dataChannelOutputStream.writeBytes("pwd" + "\n");
+
+		String line;
+		String receivedText = commandCbuffer.readLine();
+		if (!(line = receivedText).equals("")) {
+			serverPath = Paths.get(line);
+		}
+		;
 		(new Thread(new DownloadHandler(client, host, port, input, serverPath, userPath))).start();
 	}
 
@@ -139,7 +154,40 @@ public class ClientCommunicationHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public void upload() throws Exception {
-		(new Thread(new UploadHandler(client, host, port, input, serverPath, clientDir))).start();
+		// send command
+		dataChannelOutputStream.writeBytes("pwd" + "\n");
+
+		String line;
+		String receivedText = commandCbuffer.readLine();
+		if (!(line = receivedText).equals("")) {
+			serverPath = Paths.get(line);
+		}
+		;
+		(new Thread(new UploadHandler(client, host, port, input, serverPath, clientDir, username))).start();
+	}
+
+	public void terminate() throws Exception {
+		// only two arguments
+		if (input.size() != 2) {
+			invalid();
+			return;
+		}
+
+		// not backgroundable
+		if (input.get(1).endsWith(" &")) {
+			System.out.println("This command is not backgroundable.");
+			return;
+		}
+
+		try {
+			int terminateID = Integer.parseInt(input.get(1));
+			if (!client.terminateADD(terminateID))
+				System.out.println("Invalid TerminateID");
+			else
+				(new Thread(new TerminateClientCommunicationHandler(host, RunClient.tPort, terminateID))).start();
+		} catch (Exception e) {
+			System.out.println("Invalid TerminateID");
+		}
 	}
 
 	/*
@@ -150,6 +198,9 @@ public class ClientCommunicationHandler implements Runnable {
 	@Override
 	public void run() {
 		try {
+			String ftpPath = Constants.getServerPath() + File.separator + "ftp";
+			Path path = Paths.get(ftpPath + File.separator + username);
+			setPath(path);
 			Scanner scanner = new Scanner(System.in);
 			String command = "";
 			do {
@@ -185,9 +236,13 @@ public class ClientCommunicationHandler implements Runnable {
 					list();
 					break;
 				case "quit":
+					quit();
 					break;
 				case "pwd":
 					pwd();
+					break;
+				case "terminate":
+					terminate();
 					break;
 				default:
 					System.out.println("unrecognized command");
@@ -196,5 +251,21 @@ public class ClientCommunicationHandler implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void quit() throws Exception {
+		// only one argument
+		if (input.size() != 1) {
+			invalid();
+			return;
+		}
+
+		if (!client.quit()) {
+			System.out.println("error: Transfers in progress");
+			return;
+		}
+
+		// send command
+		dataChannelOutputStream.writeBytes("quit" + "\n");
 	}
 }

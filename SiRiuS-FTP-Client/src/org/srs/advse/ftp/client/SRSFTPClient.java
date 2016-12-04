@@ -96,4 +96,20 @@ public class SRSFTPClient {
 
 		return false;
 	}
+
+	/**
+	 * @param terminateID
+	 * @return
+	 */
+	public boolean terminateADD(int terminateID) {
+		if (commandChannelMap.containsKey(terminateID)) {
+			terminateSet.add(terminateID);
+			return true;
+		} else
+			return false;
+	}
+
+	public boolean quit() {
+		return dataChannelSet.isEmpty();
+	}
 }

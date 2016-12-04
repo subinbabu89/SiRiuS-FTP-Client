@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import org.srs.advse.ftp.Constants;
 import org.srs.advse.ftp.client.SRSFTPClient;
 
 /**
@@ -29,7 +30,7 @@ public class UploadHandler implements Runnable {
 
 	private SRSFTPClient client;
 	private Socket socket;
-	private Path path, serverPath;
+	private Path clientDirPath, serverPath;
 	private List<String> inputs;
 	private int terminateID;
 
@@ -47,7 +48,7 @@ public class UploadHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public UploadHandler(SRSFTPClient client, String hostname, int nPort, List<String> inputs, Path serverPath,
-			String clientDir) throws Exception {
+			String clientDir,String username) throws Exception {
 		this.client = client;
 		this.inputs = inputs;
 		this.serverPath = serverPath;
@@ -62,96 +63,27 @@ public class UploadHandler implements Runnable {
 		dataOutputStream = new DataOutputStream(outputStream);
 
 		// path = Paths.get(System.getProperty("user.dir"));
-		path = Paths.get(clientDir);
-
+		clientDirPath = Paths.get(clientDir);
+//		String ftpPath = Constants.getServerPath() + File.separator + "ftp";
+//		Path path = Paths.get(ftpPath + File.separator + username);
+//		dataOutputStream.writeBytes(path + "\n");
 	}
 
 	/**
 	 * @throws Exception
 	 */
-	// public void upload() throws Exception {
-	// if (!client.transfer(serverPath.resolve(inputs.get(1)))) {
-	// System.out.println("file already transfering");
-	// return;
-	// }
-	//
-	// if (Files.notExists(path.resolve(inputs.get(1)))) {
-	// System.out.println("no such file or directory");
-	// } else if (Files.isDirectory(path.resolve(inputs.get(1)))) {
-	// System.out.println("cannot upload directory");
-	// } else {
-	// dataOutputStream.writeBytes("up " + inputs.get(1) + "\n");
-	//
-	// try {
-	// terminateID = Integer.parseInt(bufferedReader.readLine());
-	// } catch (Exception e) {
-	// System.out.println("invalid terminate ID");
-	// }
-	//
-	// client.transferIN(serverPath.resolve(inputs.get(1)), terminateID);
-	//
-	//// if (client.terminateUPLOAD(serverPath.resolve(inputs.get(0)),
-	// terminateID)) {
-	//// return;
-	//// }
-	//
-	// bufferedReader.readLine();
-	// Thread.sleep(100);
-	//
-	// if (client.terminateUPLOAD(serverPath.resolve(inputs.get(0)),
-	// terminateID)) {
-	// return;
-	// }
-	//
-	// byte[] uploadBuffer = new byte[1000];
-	//
-	// try {
-	// File file = new File(path.resolve(inputs.get(1)).toString());
-	// long fileSize = file.length();
-	// byte[] fileSizeBytes = ByteBuffer.allocate(8).putLong(fileSize).array();
-	// dataOutputStream.write(fileSizeBytes, 0, 8);
-	//
-	//// if (client.terminateUPLOAD(serverPath.resolve(inputs.get(1)),
-	// terminateID)) {
-	//// return;
-	//// }
-	//
-	// Thread.sleep(100);
-	//
-	// BufferedInputStream bufferedInputStream = new BufferedInputStream(new
-	// FileInputStream(file));
-	// int count = 0;
-	// while ((count = bufferedInputStream.read()) > 0) {
-	//// if (client.terminateUPLOAD(serverPath.resolve(inputs.get(1)),
-	// terminateID)) {
-	//// bufferedInputStream.close();
-	//// return;
-	//// }
-	// dataOutputStream.write(uploadBuffer, 0, count);
-	// }
-	// bufferedInputStream.close();
-	// } catch (Exception e) {
-	// System.out.println("transfer error");
-	// }
-	//
-	// client.transferOUT(serverPath.resolve(inputs.get(1)), terminateID);
-	// }
-	// }
-
 	private void upload() throws Exception {
 		if (!client.transfer(serverPath.resolve(inputs.get(1)))) {
 			System.out.println("already downloading");
 			return;
 		}
 
-		if (Files.notExists(path.resolve(inputs.get(1)))) {
+		if (Files.notExists(clientDirPath.resolve(inputs.get(1)))) {
 			System.out.println("no such file");
-		} else if (Files.isDirectory(path.resolve(inputs.get(1)))) {
+		} else if (Files.isDirectory(clientDirPath.resolve(inputs.get(1)))) {
 			System.out.println("is a directory");
 		} else {
 			dataOutputStream.writeBytes("up " + inputs.get(1) + "\n");
-			// dataChannelOutputStream.writeBytes("put " +
-			// serverPath.resolve(input.get(1)) + "\n");
 
 			try {
 				terminateID = Integer.parseInt(bufferedReader.readLine());
@@ -167,7 +99,7 @@ public class UploadHandler implements Runnable {
 
 			byte[] fileBuffer = new byte[1000];
 			try {
-				File file = new File(path.resolve(inputs.get(1)).toString());
+				File file = new File(clientDirPath.resolve(inputs.get(1)).toString());
 
 				long fileSize = file.length();
 				byte[] fileSizeBytes = ByteBuffer.allocate(8).putLong(fileSize).array();
@@ -198,7 +130,7 @@ public class UploadHandler implements Runnable {
 		try {
 			upload();
 			Thread.sleep(100);
-			dataOutputStream.writeBytes("quit" + "\n");
+//			dataOutputStream.writeBytes("quit" + "\n");
 		} catch (Exception e) {
 			System.out.println("upload handler error");
 		}
