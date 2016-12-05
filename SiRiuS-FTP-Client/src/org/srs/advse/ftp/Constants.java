@@ -22,4 +22,12 @@ public class Constants {
 			return System.getProperty("user.home");
 		}
 	}
+	
+	public static String getHostString(){
+		if (currentMode == WORKING_MODE.EC2) {
+			return "ec2-35-162-41-132.us-west-2.compute.amazonaws.com";
+		} else {
+			return "localhost";
+		}
+	}
 }

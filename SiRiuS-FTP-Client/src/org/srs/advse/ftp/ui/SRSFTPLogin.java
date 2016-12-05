@@ -1,22 +1,29 @@
 package org.srs.advse.ftp.ui;
 
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import org.srs.advse.ftp.Constants;
+
 public class SRSFTPLogin extends JFrame {
 
-	private JTextField textField;
-	private JPasswordField passwordField;
+	private JTextField textFieldUserName;
+	private JPasswordField passwordFieldPass;
 	private JTextField textField_1;
+
+	private static Socket telnetSocket;
+	private static DataInputStream telnetDataInputStream;
+	private static DataOutputStream telnetDataOutputStream;
 
 	/**
 	 * Launch the application.
@@ -41,14 +48,15 @@ public class SRSFTPLogin extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		getContentPane().setLayout(null);
 
-		textField = new JTextField();
-		textField.setBounds(197, 79, 227, 20);
-		getContentPane().add(textField);
-		textField.setColumns(10);
+		textFieldUserName = new JTextField();
+		textFieldUserName.setText("subin");
+		textFieldUserName.setBounds(197, 79, 227, 20);
+		getContentPane().add(textFieldUserName);
+		textFieldUserName.setColumns(10);
 
-		passwordField = new JPasswordField();
-		passwordField.setBounds(197, 110, 227, 20);
-		getContentPane().add(passwordField);
+		passwordFieldPass = new JPasswordField();
+		passwordFieldPass.setBounds(197, 110, 227, 20);
+		getContentPane().add(passwordFieldPass);
 
 		textField_1 = new JTextField();
 		textField_1.setBounds(197, 141, 227, 20);
@@ -70,8 +78,11 @@ public class SRSFTPLogin extends JFrame {
 		JButton btnLogin = new JButton("Login");
 		btnLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				dispose();
-				SRSFTPMainWindow.main(null);
+				// dispose();
+				// String[] args =
+				// {Constants.getHostString(),"20","21","D:\\Subin"};
+				// SRSFTPMainWindow.main(args);
+				login();
 			}
 		});
 		btnLogin.setBounds(80, 199, 89, 23);
@@ -86,5 +97,30 @@ public class SRSFTPLogin extends JFrame {
 		btnCancel.setBounds(249, 199, 89, 23);
 		getContentPane().add(btnCancel);
 		setVisible(true);
+	}
+
+	private void login() {
+		try {
+			boolean logIN = false;
+			telnetSocket = new Socket(Constants.getHostString(), 23);
+			telnetDataInputStream = new DataInputStream(telnetSocket.getInputStream());
+			telnetDataOutputStream = new DataOutputStream(telnetSocket.getOutputStream());
+
+			String telnet_user_string = "telnetd_" + textFieldUserName.getText() + "_"
+					+ new String(passwordFieldPass.getPassword());
+			telnetDataOutputStream.writeUTF(telnet_user_string);
+			String telOutput = telnetDataInputStream.readUTF();
+			logIN = Boolean.parseBoolean(telOutput);
+			if (logIN) {
+				System.out.println("Login successful, Welcome User");
+				dispose();
+				String[] args = { Constants.getHostString(), "20","D:\\Subin",textFieldUserName.getText()};
+				SRSFTPMainWindow.main(args);
+			} else {
+				JOptionPane.showMessageDialog(this, "incorrect password, Try again.");
+			}
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 	}
 }

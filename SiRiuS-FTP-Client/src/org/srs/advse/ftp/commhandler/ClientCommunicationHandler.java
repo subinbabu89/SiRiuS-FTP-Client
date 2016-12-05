@@ -41,6 +41,20 @@ public class ClientCommunicationHandler implements Runnable {
 	private int port;
 	private List<String> input;
 
+	/**
+	 * @return the input
+	 */
+	public List<String> getInput() {
+		return input;
+	}
+
+	/**
+	 * @param input the input to set
+	 */
+	public void setInput(List<String> input) {
+		this.input = input;
+	}
+
 	private Socket socket;
 	private Path serverPath, userPath;
 
@@ -136,18 +150,21 @@ public class ClientCommunicationHandler implements Runnable {
 	/**
 	 * @throws Exception
 	 */
-	public void list() throws Exception {
+	public List<String> list() throws Exception {
+		List<String> files = new ArrayList<>();
 		if (input.size() != 1) {
 			invalid();
-			return;
+			return files;
 		}
 
 		dataChannelOutputStream.writeBytes("list" + "\n");
 
 		String line;
-		while (!(line = commandCbuffer.readLine()).equals(""))
+		while (!(line = commandCbuffer.readLine()).equals("")){
 			System.out.println(line);
-
+			files.add(line);
+		}
+		return files;
 	}
 
 	/**

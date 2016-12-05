@@ -6,11 +6,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -20,6 +21,10 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
+
+import org.srs.advse.ftp.Constants;
+import org.srs.advse.ftp.client.SRSFTPClient;
+import org.srs.advse.ftp.commhandler.ClientCommunicationHandler;
 
 /**
  * @author Subin
@@ -40,18 +45,25 @@ public class SRSFTPMainWindow {
 	private HashMap<JProgressBar, Boolean> progressbarMap;
 
 	private JList localFileList;
-	private JPanel clientPanel;
+	private JPanel clientPanel, serverPanel;
 
-	protected String filename;
+	protected String filename2Upload, filename2Download;
+
+	protected static String[] inputArgs;
+
+	private ClientCommunicationHandler clientCommunicationHandler;
+
+	private JList<Object> serverFileList;
 
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		inputArgs = args;
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					SRSFTPMainWindow window = new SRSFTPMainWindow();
+					SRSFTPMainWindow window = new SRSFTPMainWindow(args);
 					window.frmSiriusftp.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -62,16 +74,21 @@ public class SRSFTPMainWindow {
 
 	/**
 	 * Create the application.
+	 * 
+	 * @throws Exception
 	 */
-	public SRSFTPMainWindow() {
+	public SRSFTPMainWindow(String[] inputArgs) throws Exception {
 		initialize();
 		frmSiriusftp.setLocationRelativeTo(null);
+
 	}
 
 	/**
 	 * Initialize the contents of the frame.
+	 * 
+	 * @throws Exception
 	 */
-	private void initialize() {
+	private void initialize() throws Exception {
 		progressbarMap = new HashMap<>();
 		frmSiriusftp = new JFrame();
 		frmSiriusftp.setTitle("SiRiuS-FTP");
@@ -83,12 +100,24 @@ public class SRSFTPMainWindow {
 		wiredEvents();
 		customizeEvents();
 
+		runApp();
+
+		readLocalFiles();
+		getServerFilesList();
+	}
+
+	private void runApp() throws Exception {
+		SRSFTPClient client = new SRSFTPClient();
+		clientCommunicationHandler = new ClientCommunicationHandler(client, inputArgs[0],
+				Integer.parseInt(inputArgs[1]), inputArgs[2], inputArgs[3]);
+		(new Thread(clientCommunicationHandler)).start();
 	}
 
 	/**
+	 * @throws Exception
 	 * 
 	 */
-	private void customizeEvents() {
+	private void customizeEvents() throws Exception {
 		JButton btnIncrement = new JButton("increment");
 		btnIncrement.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -98,7 +127,6 @@ public class SRSFTPMainWindow {
 		btnIncrement.setBounds(1021, 562, 86, 36);
 		frmSiriusftp.getContentPane().add(btnIncrement);
 
-		readLocalFiles();
 	}
 
 	/**
@@ -202,7 +230,7 @@ public class SRSFTPMainWindow {
 		serverScrollPane = new JScrollPane();
 		splitPane.setRightComponent(serverScrollPane);
 
-		JPanel serverPanel = new JPanel();
+		serverPanel = new JPanel();
 		serverScrollPane.setViewportView(serverPanel);
 	}
 
@@ -212,17 +240,28 @@ public class SRSFTPMainWindow {
 	private void wiredEvents() {
 		btnUpload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				JProgressBar findProgressBar = findProgressBar();
-				findProgressBar.setVisible(true);
-				findProgressBar.setString("uploading some file");
+				// JProgressBar findProgressBar = findProgressBar();
+				// findProgressBar.setVisible(true);
+				// findProgressBar.setString("uploading some file");
+				try {
+					upload(filename2Upload);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		});
 
 		btnDownload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				JProgressBar findProgressBar = findProgressBar();
-				findProgressBar.setVisible(true);
-				findProgressBar.setString("downloading some file");
+				// JProgressBar findProgressBar = findProgressBar();
+				// findProgressBar.setVisible(true);
+				// findProgressBar.setString("downloading some file");
+
+				try {
+					download(filename2Download);
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
 	}
@@ -287,11 +326,60 @@ public class SRSFTPMainWindow {
 		localFileList.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
-				filename = (String) localFileList.getSelectedValue();
-				System.out.println(filename);
+				filename2Upload = (String) localFileList.getSelectedValue();
 			}
 		});
 		clientPanel.add(localFileList);
 		localFileList.setVisible(true);
+	}
+
+	private void getServerFilesList() throws Exception {
+		setPath();
+		clientCommunicationHandler.setInput(makeInput(new String[] { "list" }));
+		List<String> list = clientCommunicationHandler.list();
+		String[] stockArr = new String[list.size()];
+		stockArr = list.toArray(stockArr);
+
+		serverFileList = new JList<>(stockArr);
+		serverFileList.setBounds(0, 0, 202, 114);
+		serverFileList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				filename2Download = (String) serverFileList.getSelectedValue();
+			}
+		});
+		serverPanel.add(serverFileList);
+		serverFileList.setVisible(true);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	private void setPath() throws Exception {
+		String ftpPath = Constants.getServerPath() + File.separator + "ftp";
+		Path path = Paths.get(ftpPath + File.separator + inputArgs[3]);
+		clientCommunicationHandler.setPath(path);
+	}
+
+	private List<String> makeInput(String[] input) {
+		List<String> inputs = new ArrayList<String>();
+		for (int i = 0; i < input.length; i++) {
+			inputs.add(input[i]);
+		}
+		return inputs;
+	}
+
+	private void upload(String filename) throws Exception {
+		setPath();
+		clientCommunicationHandler.setInput(makeInput(new String[] { "up", filename }));
+		clientCommunicationHandler.upload();
+		// getServerFilesList();
+	}
+
+	private void download(String filename) throws Exception {
+		setPath();
+		clientCommunicationHandler.setInput(makeInput(new String[] { "down", filename }));
+		clientCommunicationHandler.download();
+		// readLocalFiles();
 	}
 }
