@@ -91,7 +91,7 @@ public class DownloadHandler implements Runnable {
 			System.out.println("invalid terminate ID");
 		}
 
-		client.transferIN(serverPath.resolve(inputs.get(1)), terminateID);
+		client.transferStart(serverPath.resolve(inputs.get(1)), terminateID);
 
 		if (client.terminateDOWNLOAD(path.resolve(inputs.get(1)), serverPath.resolve(inputs.get(1)), terminateID)) {
 			return;
@@ -119,11 +119,12 @@ public class DownloadHandler implements Runnable {
 			count = dataInputStream.read(buffer);
 			fileOutputStream.write(buffer, 0, count);
 			bytesReceived += count;
-			mainWindow.updateProgress((int)(((float)bytesReceived/fileSize)*100));
+			mainWindow.onDownloadProgress((int)(((float)bytesReceived/fileSize)*100));
 		}
+		mainWindow.onDownloadComplete();
 		fileOutputStream.close();
 
-		client.transferOUT(serverPath.resolve(inputs.get(1)), terminateID);
+		client.transferEnd(serverPath.resolve(inputs.get(1)), terminateID);
 	}
 
 	/*

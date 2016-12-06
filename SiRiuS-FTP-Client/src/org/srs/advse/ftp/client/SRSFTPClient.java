@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,7 +41,7 @@ public class SRSFTPClient {
 	 * @param path
 	 * @param commandID
 	 */
-	public synchronized void transferIN(Path path, int commandID) {
+	public synchronized void transferStart(Path path, int commandID) {
 		dataChannelSet.add(path);
 		commandChannelMap.put(commandID, path);
 	}
@@ -49,7 +50,7 @@ public class SRSFTPClient {
 	 * @param path
 	 * @param commandID
 	 */
-	public synchronized void transferOUT(Path path, int commandID) {
+	public synchronized void transferEnd(Path path, int commandID) {
 		try {
 			dataChannelSet.remove(path);
 			commandChannelMap.remove(commandID);
@@ -112,4 +113,5 @@ public class SRSFTPClient {
 	public boolean quit() {
 		return dataChannelSet.isEmpty();
 	}
+
 }

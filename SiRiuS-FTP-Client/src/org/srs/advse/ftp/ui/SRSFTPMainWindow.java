@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -35,7 +36,7 @@ import org.srs.advse.ftp.commhandler.ClientCommunicationHandler;
  * @author Subin
  *
  */
-public class SRSFTPMainWindow implements updateProgressbarCallback {
+public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgressListerner {
 
 	private JFrame frmSiriusftp;
 
@@ -60,7 +61,7 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 
 	private JList<Object> serverFileList;
 
-	DefaultListModel serverFilesModel, localFilesModel;
+	private DefaultListModel serverFilesModel, localFilesModel;
 
 	JButton btnRefreshlocallist, btnRefreshserverlist;
 
@@ -116,6 +117,9 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 		getServerFilesModel();
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	private void runApp() throws Exception {
 		SRSFTPClient client = new SRSFTPClient();
 		clientCommunicationHandler = new ClientCommunicationHandler(client, inputArgs[0],
@@ -259,9 +263,6 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 	private void wiredEvents() {
 		btnUpload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				// JProgressBar findProgressBar = findProgressBar();
-				// findProgressBar.setVisible(true);
-				// findProgressBar.setString("uploading some file");
 				try {
 					upload(filename2Upload);
 				} catch (Exception e) {
@@ -272,10 +273,6 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 
 		btnDownload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// JProgressBar findProgressBar = findProgressBar();
-				// findProgressBar.setVisible(true);
-				// findProgressBar.setString("downloading some file");
-
 				try {
 					download(filename2Download);
 				} catch (Exception e1) {
@@ -292,7 +289,7 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 					public void run() {
 
 						try {
-							getLocalFilesModel();
+							updateLocalFilesModel();
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -359,16 +356,7 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 	 */
 	private void getLocalFilesModel() {
 		// get files list
-		ArrayList<String> file_list_names = new ArrayList<String>();
-		File folder = new File("D:" + File.separator + "subin");
-		File[] listOfFiles = folder.listFiles();
-
-		for (int i = 0; i < listOfFiles.length; i++) {
-			if (listOfFiles[i].isFile()) {
-				file_list_names.add(listOfFiles[i].getName());
-			} else if (listOfFiles[i].isDirectory()) {
-			}
-		}
+		ArrayList<String> file_list_names = getLocalFiles();
 		// initialize local model
 		localFilesModel = new DefaultListModel();
 		for (Iterator iterator = file_list_names.iterator(); iterator.hasNext();) {
@@ -387,8 +375,10 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 		localFileList.setVisible(true);
 	}
 
-	private void updateLocalFilesModel() {
-		// get file list
+	/**
+	 * @return
+	 */
+	private ArrayList<String> getLocalFiles() {
 		ArrayList<String> file_list_names = new ArrayList<String>();
 		File folder = new File("D:" + File.separator + "subin");
 		File[] listOfFiles = folder.listFiles();
@@ -399,6 +389,14 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 			} else if (listOfFiles[i].isDirectory()) {
 			}
 		}
+		return file_list_names;
+	}
+
+	/**
+	 * 
+	 */
+	private void updateLocalFilesModel() {
+		ArrayList<String> file_list_names = getLocalFiles();
 		// reinitialize file list
 		localFilesModel.removeAllElements();
 		for (Iterator iterator = file_list_names.iterator(); iterator.hasNext();) {
@@ -410,6 +408,9 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 		frmSiriusftp.repaint();
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	private void getServerFilesModel() throws Exception {
 		// get files list
 		setPath();
@@ -433,6 +434,9 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 		serverFileList.setVisible(true);
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	private void updateServerFilesModel() throws Exception {
 		// get file list
 		setPath();
@@ -458,6 +462,10 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 		clientCommunicationHandler.setPath(path);
 	}
 
+	/**
+	 * @param input
+	 * @return
+	 */
 	private List<String> makeInput(String[] input) {
 		List<String> inputs = new ArrayList<String>();
 		for (int i = 0; i < input.length; i++) {
@@ -466,13 +474,14 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 		return inputs;
 	}
 
+	/**
+	 * @param filename
+	 * @throws Exception
+	 */
 	private void upload(String filename) throws Exception {
 		setPath();
 		clientCommunicationHandler.setInput(makeInput(new String[] { "up", filename }));
 		clientCommunicationHandler.upload();
-		// SwingUtilities.invokeLater(new Runnable() {
-		// @Override
-		// public void run() {
 		new Thread(new Runnable() {
 			public void run() {
 				try {
@@ -482,25 +491,42 @@ public class SRSFTPMainWindow implements updateProgressbarCallback {
 				}
 			}
 		}).start();
-		// }
-		// });
 	}
 
+	/**
+	 * @param filename
+	 * @throws Exception
+	 */
 	private void download(String filename) throws Exception {
 		setPath();
 		clientCommunicationHandler.setInput(makeInput(new String[] { "down", filename }));
 		clientCommunicationHandler.download();
-		// SwingUtilities.invokeLater(new Runnable() {
-		// @Override
-		// public void run() {
 		updateLocalFilesModel();
-		// }
-		// });
 	}
 
 	@Override
-	public void updateProgress(int progress) {
+	public void onUploadProgress(int progress) {
+		progressBar_1.setVisible(true);
+		setValue(progressBar_1, progress);
+	}
+
+	@Override
+	public void onUploadComplete() {
+		try {
+			updateServerFilesModel();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void onDownloadProgress(int progress) {
 		progressBar.setVisible(true);
 		setValue(progressBar, progress);
+	}
+
+	@Override
+	public void onDownloadComplete() {
+		updateLocalFilesModel();
 	}
 }

@@ -95,7 +95,7 @@ public class UploadHandler implements Runnable {
 				e.printStackTrace();
 			}
 
-			client.transferIN(serverPath.resolve(inputs.get(1)), terminateID);
+			client.transferStart(serverPath.resolve(inputs.get(1)), terminateID);
 
 			bufferedReader.readLine();
 
@@ -118,13 +118,14 @@ public class UploadHandler implements Runnable {
 					uploaded += count;
 					dataOutputStream.write(fileBuffer, 0, count);
 					System.out.println("new value "+((float)uploaded/fileSize)*100);
-					mainWindow.updateProgress((int)(((float)uploaded/fileSize)*100));
+					mainWindow.onUploadProgress((int)(((float)uploaded/fileSize)*100));
 				}
 				bis.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			client.transferOUT(serverPath.resolve(inputs.get(1)), terminateID);
+			mainWindow.onUploadComplete();
+			client.transferEnd(serverPath.resolve(inputs.get(1)), terminateID);
 		}
 	}
 
