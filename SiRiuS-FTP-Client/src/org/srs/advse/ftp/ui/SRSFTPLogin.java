@@ -15,6 +15,10 @@ import javax.swing.JTextField;
 
 import org.srs.advse.ftp.Constants;
 
+/**
+ * @author Subin
+ *
+ */
 public class SRSFTPLogin extends JFrame {
 
 	private JTextField textFieldUserName;
@@ -99,6 +103,9 @@ public class SRSFTPLogin extends JFrame {
 		setVisible(true);
 	}
 
+	/**
+	 * 
+	 */
 	private void login() {
 		try {
 			boolean logIN = false;

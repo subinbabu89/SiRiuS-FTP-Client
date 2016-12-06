@@ -36,21 +36,22 @@ import org.srs.advse.ftp.commhandler.ClientCommunicationHandler;
  * @author Subin
  *
  */
-public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgressListerner {
+public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgressListerner {
 
 	private JFrame frmSiriusftp;
 
 	private JSplitPane splitPane;
 	private JScrollPane clientScrollPane, serverScrollPane;
 
-	private JButton btnUpload, btnDownload;
+	private JButton btnUpload, btnDownload, btnRefreshlocallist, btnRefreshserverlist, btnDelete;
 
 	private JProgressBar progressBar, progressBar_1, progressBar_2, progressBar_3, progressBar_4, progressBar_5;
-
 	private List<JProgressBar> progressBars;
 	private HashMap<JProgressBar, Boolean> progressbarMap;
+	private HashMap<String, JProgressBar> progressbarForFile;
 
-	private JList localFileList;
+	private JList localFileList, serverFileList;
+	private DefaultListModel serverFilesModel, localFilesModel;
 	private JPanel clientPanel, serverPanel;
 
 	protected String filename2Upload, filename2Download;
@@ -58,12 +59,6 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 	protected static String[] inputArgs;
 
 	private ClientCommunicationHandler clientCommunicationHandler;
-
-	private JList<Object> serverFileList;
-
-	private DefaultListModel serverFilesModel, localFilesModel;
-
-	JButton btnRefreshlocallist, btnRefreshserverlist;
 
 	/**
 	 * Launch the application.
@@ -90,7 +85,6 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 	public SRSFTPMainWindow(String[] inputArgs) throws Exception {
 		initialize();
 		frmSiriusftp.setLocationRelativeTo(null);
-
 	}
 
 	/**
@@ -100,6 +94,7 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 	 */
 	private void initialize() throws Exception {
 		progressbarMap = new HashMap<>();
+		progressbarForFile = new HashMap<>();
 		frmSiriusftp = new JFrame();
 		frmSiriusftp.setTitle("SiRiuS-FTP");
 		frmSiriusftp.setBounds(100, 100, 1200, 800);
@@ -113,7 +108,6 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 		runApp();
 
 		getLocalFilesModel();
-		// getServerFilesList();
 		getServerFilesModel();
 	}
 
@@ -132,15 +126,6 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 	 * 
 	 */
 	private void customizeEvents() throws Exception {
-		JButton btnIncrement = new JButton("increment");
-		btnIncrement.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				setValue(progressBar, progressBar.getValue() + 10);
-			}
-		});
-		btnIncrement.setBounds(1021, 562, 86, 36);
-		frmSiriusftp.getContentPane().add(btnIncrement);
-
 	}
 
 	/**
@@ -163,35 +148,30 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 		frmSiriusftp.getContentPane().add(progressBar);
 
 		progressBar_1 = new JProgressBar();
-		progressBar_1.setIndeterminate(true);
 		progressBar_1.setStringPainted(true);
 		progressBar_1.setBounds(10, 599, 997, 14);
 		progressBar_1.setVisible(false);
 		frmSiriusftp.getContentPane().add(progressBar_1);
 
 		progressBar_2 = new JProgressBar();
-		progressBar_2.setIndeterminate(true);
 		progressBar_2.setStringPainted(true);
 		progressBar_2.setBounds(10, 625, 997, 14);
 		progressBar_2.setVisible(false);
 		frmSiriusftp.getContentPane().add(progressBar_2);
 
 		progressBar_3 = new JProgressBar();
-		progressBar_3.setIndeterminate(true);
 		progressBar_3.setStringPainted(true);
 		progressBar_3.setBounds(6, 652, 1001, 14);
 		progressBar_3.setVisible(false);
 		frmSiriusftp.getContentPane().add(progressBar_3);
 
 		progressBar_4 = new JProgressBar();
-		progressBar_4.setIndeterminate(true);
 		progressBar_4.setStringPainted(true);
 		progressBar_4.setBounds(10, 678, 997, 14);
 		progressBar_4.setVisible(false);
 		frmSiriusftp.getContentPane().add(progressBar_4);
 
 		progressBar_5 = new JProgressBar();
-		progressBar_5.setIndeterminate(true);
 		progressBar_5.setStringPainted(true);
 		progressBar_5.setVisible(false);
 		progressBar_5.setBounds(6, 702, 1001, 14);
@@ -233,6 +213,9 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 		btnRefreshserverlist.setBounds(993, 523, 160, 36);
 		frmSiriusftp.getContentPane().add(btnRefreshserverlist);
 
+		btnDelete = new JButton("Delete");
+		btnDelete.setBounds(650, 523, 160, 36);
+		frmSiriusftp.getContentPane().add(btnDelete);
 	}
 
 	/**
@@ -314,6 +297,18 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 						}
 					}
 				}).start();
+			}
+		});
+
+		btnDelete.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					deleteServerFile(filename2Download);
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
 	}
@@ -505,13 +500,25 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 	}
 
 	@Override
-	public void onUploadProgress(int progress) {
-		progressBar_1.setVisible(true);
-		setValue(progressBar_1, progress);
+	public void onUploadBegin(String filename) {
+		JProgressBar findProgressBar = findProgressBar();
+		progressbarForFile.put(filename, findProgressBar);
 	}
 
 	@Override
-	public void onUploadComplete() {
+	public void onUploadProgress(String filename, int progress) {
+		JProgressBar jProgressBar = progressbarForFile.get(filename);
+		jProgressBar.setVisible(true);
+		setValue(jProgressBar, progress);
+	}
+
+	@Override
+	public void onUploadComplete(String filename) {
+		JProgressBar jProgressBar = progressbarForFile.get(filename);
+		jProgressBar.setVisible(false);
+		progressbarMap.put(jProgressBar, Boolean.FALSE);
+		progressbarForFile.remove(jProgressBar);
+		updateLocalFilesModel();
 		try {
 			updateServerFilesModel();
 		} catch (Exception e) {
@@ -520,13 +527,39 @@ public class SRSFTPMainWindow implements DownloadProgressListerner,UploadProgres
 	}
 
 	@Override
-	public void onDownloadProgress(int progress) {
-		progressBar.setVisible(true);
-		setValue(progressBar, progress);
+	public void onDownloadBegin(String filename) {
+		JProgressBar findProgressBar = findProgressBar();
+		progressbarForFile.put(filename, findProgressBar);
 	}
 
 	@Override
-	public void onDownloadComplete() {
+	public void onDownloadProgress(String filename, int progress) {
+		JProgressBar jProgressBar = progressbarForFile.get(filename);
+		jProgressBar.setVisible(true);
+		setValue(jProgressBar, progress);
+	}
+
+	@Override
+	public void onDownloadComplete(String filename) {
+		JProgressBar jProgressBar = progressbarForFile.get(filename);
+		jProgressBar.setVisible(false);
+		progressbarMap.put(jProgressBar, Boolean.FALSE);
+		progressbarForFile.remove(jProgressBar);
 		updateLocalFilesModel();
 	}
+
+	private void deleteServerFile(String filename) throws Exception {
+		clientCommunicationHandler.setInput(makeInput(new String[] { "delete", filename }));
+		clientCommunicationHandler.delete();
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					updateServerFilesModel();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+	}
+
 }

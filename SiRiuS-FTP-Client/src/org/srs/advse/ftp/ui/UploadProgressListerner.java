@@ -9,7 +9,15 @@ package org.srs.advse.ftp.ui;
  */
 public interface UploadProgressListerner {
 
-	void onUploadProgress(int progress);
-	
-	void onUploadComplete();
+	void onUploadBegin(String filename);
+
+	/**
+	 * @param progress
+	 */
+	void onUploadProgress(String filename, int progress);
+
+	/**
+	 * 
+	 */
+	void onUploadComplete(String filename);
 }

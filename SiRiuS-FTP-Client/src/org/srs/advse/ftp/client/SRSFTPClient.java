@@ -110,6 +110,9 @@ public class SRSFTPClient {
 			return false;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean quit() {
 		return dataChannelSet.isEmpty();
 	}

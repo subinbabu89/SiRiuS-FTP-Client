@@ -72,6 +72,7 @@ public class DownloadHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public void download() throws Exception {
+		mainWindow.onDownloadBegin(inputs.get(1));
 		if (!client.transfer(serverPath.resolve(inputs.get(1)))) {
 			System.out.println("File already transfering");
 			return;
@@ -119,9 +120,9 @@ public class DownloadHandler implements Runnable {
 			count = dataInputStream.read(buffer);
 			fileOutputStream.write(buffer, 0, count);
 			bytesReceived += count;
-			mainWindow.onDownloadProgress((int)(((float)bytesReceived/fileSize)*100));
+			mainWindow.onDownloadProgress(inputs.get(1),(int)(((float)bytesReceived/fileSize)*100));
 		}
-		mainWindow.onDownloadComplete();
+		mainWindow.onDownloadComplete(inputs.get(1));
 		fileOutputStream.close();
 
 		client.transferEnd(serverPath.resolve(inputs.get(1)), terminateID);

@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.srs.advse.ftp.Constants;
 import org.srs.advse.ftp.client.SRSFTPClient;
 import org.srs.advse.ftp.ui.SRSFTPMainWindow;
 
@@ -39,7 +38,7 @@ public class UploadHandler implements Runnable {
 	private BufferedReader bufferedReader;
 	private OutputStream outputStream;
 	private DataOutputStream dataOutputStream;
-	
+
 	private SRSFTPMainWindow mainWindow;
 
 	/**
@@ -51,7 +50,7 @@ public class UploadHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public UploadHandler(SRSFTPClient client, String hostname, int nPort, List<String> inputs, Path serverPath,
-			String clientDir,String username, SRSFTPMainWindow mainWindow) throws Exception {
+			String clientDir, String username, SRSFTPMainWindow mainWindow) throws Exception {
 		this.client = client;
 		this.inputs = inputs;
 		this.serverPath = serverPath;
@@ -68,15 +67,16 @@ public class UploadHandler implements Runnable {
 
 		// path = Paths.get(System.getProperty("user.dir"));
 		clientDirPath = Paths.get(clientDir);
-//		String ftpPath = Constants.getServerPath() + File.separator + "ftp";
-//		Path path = Paths.get(ftpPath + File.separator + username);
-//		dataOutputStream.writeBytes(path + "\n");
+		// String ftpPath = Constants.getServerPath() + File.separator + "ftp";
+		// Path path = Paths.get(ftpPath + File.separator + username);
+		// dataOutputStream.writeBytes(path + "\n");
 	}
 
 	/**
 	 * @throws Exception
 	 */
 	private void upload() throws Exception {
+		mainWindow.onUploadBegin(inputs.get(1));
 		if (!client.transfer(serverPath.resolve(inputs.get(1)))) {
 			System.out.println("already downloading");
 			return;
@@ -117,14 +117,14 @@ public class UploadHandler implements Runnable {
 				while ((count = bis.read(fileBuffer)) > 0) {
 					uploaded += count;
 					dataOutputStream.write(fileBuffer, 0, count);
-					System.out.println("new value "+((float)uploaded/fileSize)*100);
-					mainWindow.onUploadProgress((int)(((float)uploaded/fileSize)*100));
+					System.out.println("new value " + ((float) uploaded / fileSize) * 100);
+					mainWindow.onUploadProgress(inputs.get(1), (int) (((float) uploaded / fileSize) * 100));
 				}
 				bis.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			mainWindow.onUploadComplete();
+			mainWindow.onUploadComplete(inputs.get(1));
 			client.transferEnd(serverPath.resolve(inputs.get(1)), terminateID);
 		}
 	}
@@ -139,7 +139,6 @@ public class UploadHandler implements Runnable {
 		try {
 			upload();
 			Thread.sleep(100);
-//			dataOutputStream.writeBytes("quit" + "\n");
 		} catch (Exception e) {
 			System.out.println("upload handler error");
 		}

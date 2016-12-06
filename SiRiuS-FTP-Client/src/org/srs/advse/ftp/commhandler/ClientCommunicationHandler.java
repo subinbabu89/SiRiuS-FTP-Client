@@ -64,14 +64,15 @@ public class ClientCommunicationHandler implements Runnable {
 	private String username;
 
 	private SRSFTPMainWindow mainWindow;
+
 	/**
 	 * @param client
 	 * @param host
 	 * @param port
 	 * @throws IOException
 	 */
-	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir, String username,SRSFTPMainWindow mainWindow)
-			throws Exception {
+	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir, String username,
+			SRSFTPMainWindow mainWindow) throws Exception {
 		this.client = client;
 		this.host = host;
 		this.port = port;
@@ -101,6 +102,10 @@ public class ClientCommunicationHandler implements Runnable {
 
 	}
 
+	/**
+	 * @param path
+	 * @throws Exception
+	 */
 	public void setPath(Path path) throws Exception {
 		dataChannelOutputStream.writeBytes("setpath " + path.toString() + "\n");
 	}
@@ -148,7 +153,8 @@ public class ClientCommunicationHandler implements Runnable {
 			serverPath = Paths.get(line);
 		}
 		;
-		Thread downloadThread = new Thread(new DownloadHandler(client, host, port, input, serverPath, userPath,mainWindow));
+		Thread downloadThread = new Thread(
+				new DownloadHandler(client, host, port, input, serverPath, userPath, mainWindow));
 		downloadThread.start();
 	}
 
@@ -185,9 +191,12 @@ public class ClientCommunicationHandler implements Runnable {
 			serverPath = Paths.get(line);
 		}
 		;
-		(new Thread(new UploadHandler(client, host, port, input, serverPath, clientDir, username,mainWindow))).start();
+		(new Thread(new UploadHandler(client, host, port, input, serverPath, clientDir, username, mainWindow))).start();
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public void terminate() throws Exception {
 		// only two arguments
 		if (input.size() != 2) {
@@ -266,6 +275,9 @@ public class ClientCommunicationHandler implements Runnable {
 				case "terminate":
 					terminate();
 					break;
+				case "delete":
+					delete();
+					break;
 				default:
 					System.out.println("unrecognized command");
 				}
@@ -275,8 +287,23 @@ public class ClientCommunicationHandler implements Runnable {
 		}
 	}
 
+	public void delete() throws Exception {
+
+		if (input.size() != 2) {
+			invalid();
+			return;
+		}
+		dataChannelOutputStream.writeBytes("delete " + input.get(1) + "\n");
+
+		String delete_line;
+		while (!(delete_line = commandCbuffer.readLine()).equals(""))
+			System.out.println(delete_line);
+	}
+
+	/**
+	 * @throws Exception
+	 */
 	private void quit() throws Exception {
-		// only one argument
 		if (input.size() != 1) {
 			invalid();
 			return;
@@ -287,7 +314,6 @@ public class ClientCommunicationHandler implements Runnable {
 			return;
 		}
 
-		// send command
 		dataChannelOutputStream.writeBytes("quit" + "\n");
 	}
 }
