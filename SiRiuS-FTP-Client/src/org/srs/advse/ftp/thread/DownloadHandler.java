@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.srs.advse.ftp.client.SRSFTPClient;
+import org.srs.advse.ftp.ui.SRSFTPMainWindow;
 
 /**
  * @author Subin
@@ -36,6 +37,8 @@ public class DownloadHandler implements Runnable {
 	private DataInputStream dataInputStream;
 	private OutputStream outputStream;
 	private DataOutputStream dataOutputStream;
+	
+	private SRSFTPMainWindow mainWindow;
 
 	/**
 	 * @param client
@@ -47,11 +50,12 @@ public class DownloadHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public DownloadHandler(SRSFTPClient client, String hostname, int nPort, List<String> inputs, Path serverPath,
-			Path path) throws Exception {
+			Path path,SRSFTPMainWindow mainWindow) throws Exception {
 		this.client = client;
 		this.inputs = inputs;
 		this.serverPath = serverPath;
 		this.path = path;
+		this.mainWindow = mainWindow;
 
 		InetAddress address = InetAddress.getByName(hostname);
 		socket = new Socket();
@@ -115,6 +119,7 @@ public class DownloadHandler implements Runnable {
 			count = dataInputStream.read(buffer);
 			fileOutputStream.write(buffer, 0, count);
 			bytesReceived += count;
+			mainWindow.updateProgress((int)(((float)bytesReceived/fileSize)*100));
 		}
 		fileOutputStream.close();
 

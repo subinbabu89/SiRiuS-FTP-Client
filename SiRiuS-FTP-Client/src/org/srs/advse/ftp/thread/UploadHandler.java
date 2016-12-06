@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.srs.advse.ftp.Constants;
 import org.srs.advse.ftp.client.SRSFTPClient;
+import org.srs.advse.ftp.ui.SRSFTPMainWindow;
 
 /**
  * @author Subin
@@ -38,6 +39,8 @@ public class UploadHandler implements Runnable {
 	private BufferedReader bufferedReader;
 	private OutputStream outputStream;
 	private DataOutputStream dataOutputStream;
+	
+	private SRSFTPMainWindow mainWindow;
 
 	/**
 	 * @param client
@@ -48,10 +51,11 @@ public class UploadHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public UploadHandler(SRSFTPClient client, String hostname, int nPort, List<String> inputs, Path serverPath,
-			String clientDir,String username) throws Exception {
+			String clientDir,String username, SRSFTPMainWindow mainWindow) throws Exception {
 		this.client = client;
 		this.inputs = inputs;
 		this.serverPath = serverPath;
+		this.mainWindow = mainWindow;
 
 		InetAddress address = InetAddress.getByName(hostname);
 		socket = new Socket();
@@ -109,8 +113,12 @@ public class UploadHandler implements Runnable {
 
 				BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
 				int count = 0;
+				long uploaded = 0;
 				while ((count = bis.read(fileBuffer)) > 0) {
+					uploaded += count;
 					dataOutputStream.write(fileBuffer, 0, count);
+					System.out.println("new value "+((float)uploaded/fileSize)*100);
+					mainWindow.updateProgress((int)(((float)uploaded/fileSize)*100));
 				}
 				bis.close();
 			} catch (Exception e) {

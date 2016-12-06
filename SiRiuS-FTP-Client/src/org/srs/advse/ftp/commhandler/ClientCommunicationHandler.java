@@ -23,6 +23,7 @@ import org.srs.advse.ftp.RunClient;
 import org.srs.advse.ftp.client.SRSFTPClient;
 import org.srs.advse.ftp.thread.DownloadHandler;
 import org.srs.advse.ftp.thread.UploadHandler;
+import org.srs.advse.ftp.ui.SRSFTPMainWindow;
 
 /**
  * @author Subin
@@ -49,7 +50,8 @@ public class ClientCommunicationHandler implements Runnable {
 	}
 
 	/**
-	 * @param input the input to set
+	 * @param input
+	 *            the input to set
 	 */
 	public void setInput(List<String> input) {
 		this.input = input;
@@ -61,19 +63,21 @@ public class ClientCommunicationHandler implements Runnable {
 	private String clientDir;
 	private String username;
 
+	private SRSFTPMainWindow mainWindow;
 	/**
 	 * @param client
 	 * @param host
 	 * @param port
 	 * @throws IOException
 	 */
-	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir, String username)
+	public ClientCommunicationHandler(SRSFTPClient client, String host, int port, String clientDir, String username,SRSFTPMainWindow mainWindow)
 			throws Exception {
 		this.client = client;
 		this.host = host;
 		this.port = port;
 		this.clientDir = clientDir;
 		this.username = username;
+		this.mainWindow = mainWindow;
 
 		InetAddress hostAddress = InetAddress.getByName(host);
 		socket = new Socket();
@@ -144,7 +148,8 @@ public class ClientCommunicationHandler implements Runnable {
 			serverPath = Paths.get(line);
 		}
 		;
-		(new Thread(new DownloadHandler(client, host, port, input, serverPath, userPath))).start();
+		Thread downloadThread = new Thread(new DownloadHandler(client, host, port, input, serverPath, userPath,mainWindow));
+		downloadThread.start();
 	}
 
 	/**
@@ -160,9 +165,9 @@ public class ClientCommunicationHandler implements Runnable {
 		dataChannelOutputStream.writeBytes("list" + "\n");
 
 		String line;
-		while (!(line = commandCbuffer.readLine()).equals("")){
-			System.out.println(line);
+		while (!(line = commandCbuffer.readLine()).equals("")) {
 			files.add(line);
+			System.out.println(line);
 		}
 		return files;
 	}
@@ -180,7 +185,7 @@ public class ClientCommunicationHandler implements Runnable {
 			serverPath = Paths.get(line);
 		}
 		;
-		(new Thread(new UploadHandler(client, host, port, input, serverPath, clientDir, username))).start();
+		(new Thread(new UploadHandler(client, host, port, input, serverPath, clientDir, username,mainWindow))).start();
 	}
 
 	public void terminate() throws Exception {

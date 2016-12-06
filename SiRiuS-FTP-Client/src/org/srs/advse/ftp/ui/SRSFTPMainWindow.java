@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -20,7 +21,11 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 
 import org.srs.advse.ftp.Constants;
 import org.srs.advse.ftp.client.SRSFTPClient;
@@ -30,7 +35,7 @@ import org.srs.advse.ftp.commhandler.ClientCommunicationHandler;
  * @author Subin
  *
  */
-public class SRSFTPMainWindow {
+public class SRSFTPMainWindow implements updateProgressbarCallback {
 
 	private JFrame frmSiriusftp;
 
@@ -54,6 +59,10 @@ public class SRSFTPMainWindow {
 	private ClientCommunicationHandler clientCommunicationHandler;
 
 	private JList<Object> serverFileList;
+
+	DefaultListModel serverFilesModel, localFilesModel;
+
+	JButton btnRefreshlocallist, btnRefreshserverlist;
 
 	/**
 	 * Launch the application.
@@ -102,14 +111,15 @@ public class SRSFTPMainWindow {
 
 		runApp();
 
-		readLocalFiles();
-		getServerFilesList();
+		getLocalFilesModel();
+		// getServerFilesList();
+		getServerFilesModel();
 	}
 
 	private void runApp() throws Exception {
 		SRSFTPClient client = new SRSFTPClient();
 		clientCommunicationHandler = new ClientCommunicationHandler(client, inputArgs[0],
-				Integer.parseInt(inputArgs[1]), inputArgs[2], inputArgs[3]);
+				Integer.parseInt(inputArgs[1]), inputArgs[2], inputArgs[3], this);
 		(new Thread(clientCommunicationHandler)).start();
 	}
 
@@ -210,6 +220,15 @@ public class SRSFTPMainWindow {
 		btnDownload = new JButton("Download");
 		btnDownload.setBounds(872, 523, 86, 36);
 		frmSiriusftp.getContentPane().add(btnDownload);
+
+		btnRefreshlocallist = new JButton("RefreshLocalList");
+		btnRefreshlocallist.setBounds(350, 523, 147, 36);
+		frmSiriusftp.getContentPane().add(btnRefreshlocallist);
+
+		btnRefreshserverlist = new JButton("RefreshServerList");
+		btnRefreshserverlist.setBounds(993, 523, 160, 36);
+		frmSiriusftp.getContentPane().add(btnRefreshserverlist);
+
 	}
 
 	/**
@@ -264,6 +283,42 @@ public class SRSFTPMainWindow {
 				}
 			}
 		});
+
+		btnRefreshlocallist.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+
+						try {
+							getLocalFilesModel();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						frmSiriusftp.revalidate();
+						frmSiriusftp.repaint();
+					}
+				}).start();
+			}
+		});
+
+		btnRefreshserverlist.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+
+						try {
+							updateServerFilesModel();
+						} catch (Exception e1) {
+							e1.printStackTrace();
+						}
+					}
+				}).start();
+			}
+		});
 	}
 
 	/**
@@ -279,12 +334,9 @@ public class SRSFTPMainWindow {
 	 * @param j
 	 */
 	public void setValue(final JProgressBar bar, final int j) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				updateProgress(bar, j);
-			}
-		});
+		updateProgress(bar, j);
+		frmSiriusftp.revalidate();
+		frmSiriusftp.repaint();
 	}
 
 	/**
@@ -305,27 +357,29 @@ public class SRSFTPMainWindow {
 	/**
 	 * 
 	 */
-	private void readLocalFiles() {
+	private void getLocalFilesModel() {
+		// get files list
 		ArrayList<String> file_list_names = new ArrayList<String>();
-
 		File folder = new File("D:" + File.separator + "subin");
 		File[] listOfFiles = folder.listFiles();
 
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
-
 				file_list_names.add(listOfFiles[i].getName());
 			} else if (listOfFiles[i].isDirectory()) {
 			}
 		}
-
-		String[] file_list = file_list_names.toArray(new String[0]);
-
-		localFileList = new JList(file_list);
+		// initialize local model
+		localFilesModel = new DefaultListModel();
+		for (Iterator iterator = file_list_names.iterator(); iterator.hasNext();) {
+			String string = (String) iterator.next();
+			localFilesModel.addElement(string);
+		}
+		localFileList = new JList<>(localFilesModel);
 		localFileList.setBounds(0, 0, 202, 114);
 		localFileList.addMouseListener(new MouseAdapter() {
 			@Override
-			public void mouseClicked(MouseEvent arg0) {
+			public void mouseClicked(MouseEvent e) {
 				filename2Upload = (String) localFileList.getSelectedValue();
 			}
 		});
@@ -333,14 +387,41 @@ public class SRSFTPMainWindow {
 		localFileList.setVisible(true);
 	}
 
-	private void getServerFilesList() throws Exception {
+	private void updateLocalFilesModel() {
+		// get file list
+		ArrayList<String> file_list_names = new ArrayList<String>();
+		File folder = new File("D:" + File.separator + "subin");
+		File[] listOfFiles = folder.listFiles();
+
+		for (int i = 0; i < listOfFiles.length; i++) {
+			if (listOfFiles[i].isFile()) {
+				file_list_names.add(listOfFiles[i].getName());
+			} else if (listOfFiles[i].isDirectory()) {
+			}
+		}
+		// reinitialize file list
+		localFilesModel.removeAllElements();
+		for (Iterator iterator = file_list_names.iterator(); iterator.hasNext();) {
+			String string = (String) iterator.next();
+			localFilesModel.addElement(string);
+		}
+
+		frmSiriusftp.revalidate();
+		frmSiriusftp.repaint();
+	}
+
+	private void getServerFilesModel() throws Exception {
+		// get files list
 		setPath();
 		clientCommunicationHandler.setInput(makeInput(new String[] { "list" }));
-		List<String> list = clientCommunicationHandler.list();
-		String[] stockArr = new String[list.size()];
-		stockArr = list.toArray(stockArr);
-
-		serverFileList = new JList<>(stockArr);
+		List<String> file_list_names = clientCommunicationHandler.list();
+		// initialize server model
+		serverFilesModel = new DefaultListModel();
+		for (Iterator iterator = file_list_names.iterator(); iterator.hasNext();) {
+			String string = (String) iterator.next();
+			serverFilesModel.addElement(string);
+		}
+		serverFileList = new JList<>(serverFilesModel);
 		serverFileList.setBounds(0, 0, 202, 114);
 		serverFileList.addMouseListener(new MouseAdapter() {
 			@Override
@@ -350,6 +431,22 @@ public class SRSFTPMainWindow {
 		});
 		serverPanel.add(serverFileList);
 		serverFileList.setVisible(true);
+	}
+
+	private void updateServerFilesModel() throws Exception {
+		// get file list
+		setPath();
+		clientCommunicationHandler.setInput(makeInput(new String[] { "list" }));
+		List<String> file_list_names = clientCommunicationHandler.list();
+		// reinitialize file list
+		serverFilesModel.removeAllElements();
+		for (Iterator iterator = file_list_names.iterator(); iterator.hasNext();) {
+			String string = (String) iterator.next();
+			serverFilesModel.addElement(string);
+		}
+
+		frmSiriusftp.revalidate();
+		frmSiriusftp.repaint();
 	}
 
 	/**
@@ -373,13 +470,37 @@ public class SRSFTPMainWindow {
 		setPath();
 		clientCommunicationHandler.setInput(makeInput(new String[] { "up", filename }));
 		clientCommunicationHandler.upload();
-		// getServerFilesList();
+		// SwingUtilities.invokeLater(new Runnable() {
+		// @Override
+		// public void run() {
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					updateServerFilesModel();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+		// }
+		// });
 	}
 
 	private void download(String filename) throws Exception {
 		setPath();
 		clientCommunicationHandler.setInput(makeInput(new String[] { "down", filename }));
 		clientCommunicationHandler.download();
-		// readLocalFiles();
+		// SwingUtilities.invokeLater(new Runnable() {
+		// @Override
+		// public void run() {
+		updateLocalFilesModel();
+		// }
+		// });
+	}
+
+	@Override
+	public void updateProgress(int progress) {
+		progressBar.setVisible(true);
+		setValue(progressBar, progress);
 	}
 }
