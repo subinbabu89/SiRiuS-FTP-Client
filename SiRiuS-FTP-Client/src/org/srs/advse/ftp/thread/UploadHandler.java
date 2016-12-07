@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.srs.advse.ftp.thread;
 
 import java.io.BufferedInputStream;
@@ -23,6 +20,8 @@ import org.srs.advse.ftp.client.SRSFTPClient;
 import org.srs.advse.ftp.ui.SRSFTPMainWindow;
 
 /**
+ * Thread to handle the upload operation
+ * 
  * @author Subin
  *
  */
@@ -42,6 +41,8 @@ public class UploadHandler implements Runnable {
 	private SRSFTPMainWindow mainWindow;
 
 	/**
+	 * Constructor to initialize the class with
+	 * 
 	 * @param client
 	 * @param hostname
 	 * @param nPort
@@ -65,14 +66,12 @@ public class UploadHandler implements Runnable {
 		outputStream = socket.getOutputStream();
 		dataOutputStream = new DataOutputStream(outputStream);
 
-		// path = Paths.get(System.getProperty("user.dir"));
 		clientDirPath = Paths.get(clientDir);
-		// String ftpPath = Constants.getServerPath() + File.separator + "ftp";
-		// Path path = Paths.get(ftpPath + File.separator + username);
-		// dataOutputStream.writeBytes(path + "\n");
 	}
 
 	/**
+	 * Perform upload operation
+	 * 
 	 * @throws Exception
 	 */
 	private void upload() throws Exception {

@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -22,17 +21,14 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.ListModel;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 
 import org.srs.advse.ftp.Constants;
 import org.srs.advse.ftp.client.SRSFTPClient;
 import org.srs.advse.ftp.commhandler.ClientCommunicationHandler;
 
 /**
+ * Class for the main application window for the app
+ * 
  * @author Subin
  *
  */
@@ -103,7 +99,6 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 
 		init();
 		wiredEvents();
-		customizeEvents();
 
 		runApp();
 
@@ -112,6 +107,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Run the underlying client code for the app
+	 * 
 	 * @throws Exception
 	 */
 	private void runApp() throws Exception {
@@ -122,14 +119,7 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
-	 * @throws Exception
-	 * 
-	 */
-	private void customizeEvents() throws Exception {
-	}
-
-	/**
-	 * 
+	 * Perform initialization related work
 	 */
 	private void init() {
 		initializePanels();
@@ -138,7 +128,7 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
-	 * 
+	 * Perform initialization of the progress bars
 	 */
 	private void initializeProgressBars() {
 		progressBar = new JProgressBar();
@@ -194,7 +184,7 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
-	 * 
+	 * Perform initialization of the buttons on the app
 	 */
 	private void initializeTransferButtons() {
 		btnUpload = new JButton("Upload");
@@ -219,7 +209,7 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
-	 * 
+	 * Perform initialization of the panels in the app
 	 */
 	private void initializePanels() {
 		splitPane = new JSplitPane();
@@ -241,7 +231,7 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
-	 * 
+	 * Add event listeners for the buttons in the app
 	 */
 	private void wiredEvents() {
 		btnUpload.addActionListener(new ActionListener() {
@@ -314,6 +304,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Method to update the progress of the given progress bar
+	 * 
 	 * @param jProgressBar
 	 * @param newValue
 	 */
@@ -322,6 +314,9 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * 
+	 * Method used to set the new value on the progressbar
+	 * 
 	 * @param bar
 	 * @param j
 	 */
@@ -332,6 +327,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Get a progressbar to display on the screen
+	 * 
 	 * @param map
 	 * @return
 	 */
@@ -347,7 +344,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
-	 * 
+	 * Method to read files from the local working folder and set it to the
+	 * jlist
 	 */
 	private void getLocalFilesModel() {
 		// get files list
@@ -371,6 +369,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Method to read files from the local working folder
+	 * 
 	 * @return
 	 */
 	private ArrayList<String> getLocalFiles() {
@@ -388,7 +388,7 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
-	 * 
+	 * Update the local files jlist
 	 */
 	private void updateLocalFilesModel() {
 		ArrayList<String> file_list_names = getLocalFiles();
@@ -404,11 +404,12 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Method used to get files on the server and update the relevant jlist
+	 * 
 	 * @throws Exception
 	 */
 	private void getServerFilesModel() throws Exception {
 		// get files list
-		setPath();
 		clientCommunicationHandler.setInput(makeInput(new String[] { "list" }));
 		List<String> file_list_names = clientCommunicationHandler.list();
 		// initialize server model
@@ -430,6 +431,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Method to update the list of files on the relevant jlist
+	 * 
 	 * @throws Exception
 	 */
 	private void updateServerFilesModel() throws Exception {
@@ -449,6 +452,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Method used to set path on the server
+	 * 
 	 * @throws Exception
 	 */
 	private void setPath() throws Exception {
@@ -458,6 +463,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Method used to construct inputs for the comm handler
+	 * 
 	 * @param input
 	 * @return
 	 */
@@ -470,6 +477,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Perform file upload
+	 * 
 	 * @param filename
 	 * @throws Exception
 	 */
@@ -489,6 +498,8 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 	}
 
 	/**
+	 * Perform file download
+	 * 
 	 * @param filename
 	 * @throws Exception
 	 */
@@ -548,6 +559,12 @@ public class SRSFTPMainWindow implements DownloadProgressListerner, UploadProgre
 		updateLocalFilesModel();
 	}
 
+	/**
+	 * Delete file on the server
+	 * 
+	 * @param filename
+	 * @throws Exception
+	 */
 	private void deleteServerFile(String filename) throws Exception {
 		clientCommunicationHandler.setInput(makeInput(new String[] { "delete", filename }));
 		clientCommunicationHandler.delete();

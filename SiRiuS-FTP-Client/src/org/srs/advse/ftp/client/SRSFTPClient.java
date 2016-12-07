@@ -30,6 +30,8 @@ public class SRSFTPClient {
 	}
 
 	/**
+	 * Indicate start of transfer
+	 * 
 	 * @param path
 	 * @return
 	 */
@@ -38,6 +40,8 @@ public class SRSFTPClient {
 	}
 
 	/**
+	 * Indicate start of transfer
+	 * 
 	 * @param path
 	 * @param commandID
 	 */
@@ -47,6 +51,8 @@ public class SRSFTPClient {
 	}
 
 	/**
+	 * indicate end of transfer
+	 * 
 	 * @param path
 	 * @param commandID
 	 */
@@ -59,6 +65,8 @@ public class SRSFTPClient {
 	}
 
 	/**
+	 * Method to check for the termination of upload operation
+	 * 
 	 * @param path
 	 * @param commandID
 	 * @return
@@ -78,6 +86,8 @@ public class SRSFTPClient {
 	}
 
 	/**
+	 * Method to check for the termination of download operation
+	 * 
 	 * @param path
 	 * @param serverPath
 	 * @param commandID
@@ -99,6 +109,8 @@ public class SRSFTPClient {
 	}
 
 	/**
+	 * Method to add current operation to terminate set
+	 * 
 	 * @param terminateID
 	 * @return
 	 */
@@ -111,6 +123,8 @@ public class SRSFTPClient {
 	}
 
 	/**
+	 * Method to perform on app quit
+	 * 
 	 * @return
 	 */
 	public boolean quit() {

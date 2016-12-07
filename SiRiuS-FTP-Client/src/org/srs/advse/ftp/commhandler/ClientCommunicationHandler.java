@@ -1,9 +1,7 @@
-/**
- * 
- */
 package org.srs.advse.ftp.commhandler;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +24,8 @@ import org.srs.advse.ftp.thread.UploadHandler;
 import org.srs.advse.ftp.ui.SRSFTPMainWindow;
 
 /**
+ * Comm handler for all communication for the client
+ * 
  * @author Subin
  *
  */
@@ -35,27 +35,13 @@ public class ClientCommunicationHandler implements Runnable {
 	BufferedReader commandCbuffer;
 
 	private DataOutputStream dataChannelOutputStream;
+	private DataInputStream dataChannelInputStream;
 	private OutputStream dataOutputStream;
 
 	private SRSFTPClient client;
 	private String host;
 	private int port;
 	private List<String> input;
-
-	/**
-	 * @return the input
-	 */
-	public List<String> getInput() {
-		return input;
-	}
-
-	/**
-	 * @param input
-	 *            the input to set
-	 */
-	public void setInput(List<String> input) {
-		this.input = input;
-	}
 
 	private Socket socket;
 	private Path serverPath, userPath;
@@ -66,6 +52,8 @@ public class ClientCommunicationHandler implements Runnable {
 	private SRSFTPMainWindow mainWindow;
 
 	/**
+	 * Constructor to initialize the class with
+	 * 
 	 * @param client
 	 * @param host
 	 * @param port
@@ -90,6 +78,8 @@ public class ClientCommunicationHandler implements Runnable {
 		dataOutputStream = socket.getOutputStream();
 		dataChannelOutputStream = new DataOutputStream(dataOutputStream);
 
+		dataChannelInputStream = new DataInputStream(socket.getInputStream());
+
 		dataChannelOutputStream.writeBytes("pwd" + "\n");
 		String line;
 		if (!(line = commandCbuffer.readLine()).equals("")) {
@@ -99,10 +89,30 @@ public class ClientCommunicationHandler implements Runnable {
 		// userPath = Paths.get(System.getProperty("user.dir"));
 		userPath = Paths.get(clientDir);
 		System.out.println("Connected to: " + hostAddress);
-
 	}
 
 	/**
+	 * Getter for input
+	 * 
+	 * @return the input
+	 */
+	public List<String> getInput() {
+		return input;
+	}
+
+	/**
+	 * Setter for input
+	 * 
+	 * @param input
+	 *            the input to set
+	 */
+	public void setInput(List<String> input) {
+		this.input = input;
+	}
+
+	/**
+	 * Setter for the path
+	 * 
 	 * @param path
 	 * @throws Exception
 	 */
@@ -111,6 +121,8 @@ public class ClientCommunicationHandler implements Runnable {
 	}
 
 	/**
+	 * PWD command
+	 * 
 	 * @throws Exception
 	 */
 	public void pwd() throws Exception {
@@ -133,7 +145,7 @@ public class ClientCommunicationHandler implements Runnable {
 	}
 
 	/**
-	 * 
+	 * To do in case of invalid state
 	 */
 	public void invalid() {
 		System.out.println("Invalid Arguments");
@@ -141,10 +153,11 @@ public class ClientCommunicationHandler implements Runnable {
 	}
 
 	/**
+	 * RETR command
+	 * 
 	 * @throws Exception
 	 */
 	public void download() throws Exception {
-		// send command
 		dataChannelOutputStream.writeBytes("pwd" + "\n");
 
 		String line;
@@ -159,6 +172,8 @@ public class ClientCommunicationHandler implements Runnable {
 	}
 
 	/**
+	 * LIST command
+	 * 
 	 * @throws Exception
 	 */
 	public List<String> list() throws Exception {
@@ -179,10 +194,11 @@ public class ClientCommunicationHandler implements Runnable {
 	}
 
 	/**
+	 * STOR command
+	 * 
 	 * @throws Exception
 	 */
 	public void upload() throws Exception {
-		// send command
 		dataChannelOutputStream.writeBytes("pwd" + "\n");
 
 		String line;
@@ -195,18 +211,14 @@ public class ClientCommunicationHandler implements Runnable {
 	}
 
 	/**
+	 * TERMINATE command
+	 * 
 	 * @throws Exception
 	 */
 	public void terminate() throws Exception {
 		// only two arguments
 		if (input.size() != 2) {
 			invalid();
-			return;
-		}
-
-		// not backgroundable
-		if (input.get(1).endsWith(" &")) {
-			System.out.println("This command is not backgroundable.");
 			return;
 		}
 
@@ -278,6 +290,19 @@ public class ClientCommunicationHandler implements Runnable {
 				case "delete":
 					delete();
 					break;
+				case "mode":
+					mode();
+					break;
+				case "type":
+					type();
+					break;
+				case "user":
+					user();
+					break;
+				case "pasv":
+					pasv();
+					break;
+
 				default:
 					System.out.println("unrecognized command");
 				}
@@ -287,6 +312,61 @@ public class ClientCommunicationHandler implements Runnable {
 		}
 	}
 
+	/**
+	 * MODE command
+	 * 
+	 * @throws Exception
+	 */
+	private void mode() throws Exception {
+		dataChannelOutputStream.writeUTF("mode");
+		System.out.println("The MODE message from server is " + commandCbuffer.readLine());
+	}
+
+	/**
+	 * TYPE command
+	 * 
+	 * @throws Exception
+	 */
+	private void type() throws Exception {
+		dataChannelOutputStream.writeUTF("type");
+		System.out.println("The TYPE message from server is " + commandCbuffer.readLine());
+	}
+
+	/**
+	 * USER command
+	 * 
+	 * @throws Exception
+	 */
+	private void user() throws Exception {
+		dataChannelOutputStream.writeUTF("user " + username);
+		createUserDirectory(username);
+	}
+
+	/**
+	 * create directory for user
+	 * 
+	 * @param username2
+	 */
+	private void createUserDirectory(String username2) {
+
+	}
+
+	/**
+	 * PASV command
+	 * 
+	 * @throws Exception
+	 */
+	private void pasv() throws Exception {
+		dataChannelOutputStream.writeUTF("pasv");
+		int data_port = Integer.parseInt(commandCbuffer.readLine());
+		System.out.println("data port is " + data_port);
+	}
+
+	/**
+	 * DELETE command
+	 * 
+	 * @throws Exception
+	 */
 	public void delete() throws Exception {
 
 		if (input.size() != 2) {
@@ -301,6 +381,8 @@ public class ClientCommunicationHandler implements Runnable {
 	}
 
 	/**
+	 * QUIT command
+	 * 
 	 * @throws Exception
 	 */
 	private void quit() throws Exception {

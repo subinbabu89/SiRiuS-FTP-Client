@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.srs.advse.ftp;
 
 import java.io.DataInputStream;
@@ -14,6 +11,8 @@ import org.srs.advse.ftp.client.SRSFTPClient;
 import org.srs.advse.ftp.commhandler.ClientCommunicationHandler;
 
 /**
+ * Class to start the client for the app
+ * 
  * @author Subin
  *
  */
@@ -27,6 +26,8 @@ public class RunClient {
 	private static DataOutputStream telnetDataOutputStream;
 
 	/**
+	 * Main function to run this class
+	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
@@ -35,7 +36,6 @@ public class RunClient {
 
 		System.out.println("Enter your username : ");
 		String username = scanner.nextLine();
-		
 
 		try {
 			hostname = args[0];
@@ -54,16 +54,16 @@ public class RunClient {
 			telnetDataInputStream = new DataInputStream(telnetSocket.getInputStream());
 			telnetDataOutputStream = new DataOutputStream(telnetSocket.getOutputStream());
 
-			while (logIN==false) {
+			while (logIN == false) {
 				System.out.println("Enter your password : ");
 				String password = scanner.nextLine();
 				String telnet_user_string = "telnetd_" + username + "_" + password;
 				telnetDataOutputStream.writeUTF(telnet_user_string);
 				String telOutput = telnetDataInputStream.readUTF();
 				logIN = Boolean.parseBoolean(telOutput);
-				if(logIN){
+				if (logIN) {
 					System.out.println("Login successful, Welcome User");
-				}else{
+				} else {
 					System.out.println("incorrect password, Try again.");
 				}
 			}
@@ -72,7 +72,7 @@ public class RunClient {
 		}
 		try {
 			SRSFTPClient client = new SRSFTPClient();
-			(new Thread(new ClientCommunicationHandler(client, hostname, nPort, clientDir,username,null))).start();
+			(new Thread(new ClientCommunicationHandler(client, hostname, nPort, clientDir, username, null))).start();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

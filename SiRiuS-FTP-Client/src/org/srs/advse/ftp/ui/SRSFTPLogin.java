@@ -16,11 +16,17 @@ import javax.swing.JTextField;
 import org.srs.advse.ftp.Constants;
 
 /**
+ * Class for the login window for the client app
+ * 
  * @author Subin
  *
  */
 public class SRSFTPLogin extends JFrame {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4736802206170115720L;
 	private JTextField textFieldUserName;
 	private JPasswordField passwordFieldPass;
 	private JTextField textField_1;
@@ -63,6 +69,7 @@ public class SRSFTPLogin extends JFrame {
 		getContentPane().add(passwordFieldPass);
 
 		textField_1 = new JTextField();
+		textField_1.setText(Constants.getHostString());
 		textField_1.setBounds(197, 141, 227, 20);
 		getContentPane().add(textField_1);
 		textField_1.setColumns(10);
@@ -82,10 +89,6 @@ public class SRSFTPLogin extends JFrame {
 		JButton btnLogin = new JButton("Login");
 		btnLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// dispose();
-				// String[] args =
-				// {Constants.getHostString(),"20","21","D:\\Subin"};
-				// SRSFTPMainWindow.main(args);
 				login();
 			}
 		});
@@ -104,7 +107,7 @@ public class SRSFTPLogin extends JFrame {
 	}
 
 	/**
-	 * 
+	 * Method to perform the login operationa
 	 */
 	private void login() {
 		try {
@@ -121,7 +124,7 @@ public class SRSFTPLogin extends JFrame {
 			if (logIN) {
 				System.out.println("Login successful, Welcome User");
 				dispose();
-				String[] args = { Constants.getHostString(), "20","D:\\Subin",textFieldUserName.getText()};
+				String[] args = { Constants.getHostString(), "20", "D:\\Subin", textFieldUserName.getText() };
 				SRSFTPMainWindow.main(args);
 			} else {
 				JOptionPane.showMessageDialog(this, "incorrect password, Try again.");

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.srs.advse.ftp.thread;
 
 import java.io.BufferedReader;
@@ -21,6 +18,8 @@ import org.srs.advse.ftp.client.SRSFTPClient;
 import org.srs.advse.ftp.ui.SRSFTPMainWindow;
 
 /**
+ * Thread to handle the download operation
+ * 
  * @author Subin
  *
  */
@@ -37,10 +36,12 @@ public class DownloadHandler implements Runnable {
 	private DataInputStream dataInputStream;
 	private OutputStream outputStream;
 	private DataOutputStream dataOutputStream;
-	
+
 	private SRSFTPMainWindow mainWindow;
 
 	/**
+	 * Constructor to initialize the class with
+	 * 
 	 * @param client
 	 * @param hostname
 	 * @param nPort
@@ -50,7 +51,7 @@ public class DownloadHandler implements Runnable {
 	 * @throws Exception
 	 */
 	public DownloadHandler(SRSFTPClient client, String hostname, int nPort, List<String> inputs, Path serverPath,
-			Path path,SRSFTPMainWindow mainWindow) throws Exception {
+			Path path, SRSFTPMainWindow mainWindow) throws Exception {
 		this.client = client;
 		this.inputs = inputs;
 		this.serverPath = serverPath;
@@ -69,6 +70,8 @@ public class DownloadHandler implements Runnable {
 	}
 
 	/**
+	 * Perform upload operation
+	 * 
 	 * @throws Exception
 	 */
 	public void download() throws Exception {
@@ -120,7 +123,7 @@ public class DownloadHandler implements Runnable {
 			count = dataInputStream.read(buffer);
 			fileOutputStream.write(buffer, 0, count);
 			bytesReceived += count;
-			mainWindow.onDownloadProgress(inputs.get(1),(int)(((float)bytesReceived/fileSize)*100));
+			mainWindow.onDownloadProgress(inputs.get(1), (int) (((float) bytesReceived / fileSize) * 100));
 		}
 		mainWindow.onDownloadComplete(inputs.get(1));
 		fileOutputStream.close();

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.srs.advse.ftp.commhandler;
 
 import java.io.DataOutputStream;
@@ -10,6 +7,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
+ * Communication Handler for the terminate command
+ * 
  * @author Subin
  *
  */
@@ -21,6 +20,8 @@ public class TerminateClientCommunicationHandler implements Runnable {
 	private int terminateID;
 
 	/**
+	 * Constructor to initialize the class with
+	 * 
 	 * @param hostname
 	 * @param tPort
 	 * @param terminateID
